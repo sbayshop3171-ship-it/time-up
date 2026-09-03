@@ -1,0 +1,110 @@
+import { Head, Link, useForm } from '@inertiajs/react';
+import Field from '../../components/Field';
+import PageHeader from '../../components/PageHeader';
+import { taka } from '../../lib/brand';
+import { t } from '../../lib/strings';
+import type { Channel } from '../../types';
+
+export default function Deposit({
+    channels,
+    quickAmounts,
+}: {
+    channels: Channel[];
+    quickAmounts: number[];
+}) {
+    const { data, setData, post, processing, errors } = useForm({
+        channel_id: channels[0]?.id ?? '',
+        amount: '',
+        sender_no: '',
+        txn_id: '',
+    });
+
+    const channel = channels.find((c) => c.id === data.channel_id) ?? channels[0];
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post('/deposit');
+    };
+
+    return (
+        <>
+            <Head title={t.deposit} />
+            <PageHeader
+                title={t.deposit}
+                action={<Link href="/deposit-history" className="btn btn--ghost" style={{ fontSize: 11, padding: '6px 12px' }}>হিস্টোরি</Link>}
+            />
+
+            <form style={{ margin: 12 }} onSubmit={submit} noValidate>
+                <div className="field">
+                    <label>পেমেন্ট মেথড</label>
+                    <div className="grid grid--2" style={{ gap: 8 }}>
+                        {channels.map((c) => (
+                            <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setData('channel_id', c.id)}
+                                className="game"
+                                style={{
+                                    padding: '10px 8px',
+                                    display: 'flex', alignItems: 'center', gap: 9,
+                                    borderColor: c.id === data.channel_id ? 'var(--gold)' : 'var(--line)',
+                                    background: c.id === data.channel_id ? 'rgba(255,196,46,.12)' : undefined,
+                                }}
+                                aria-pressed={c.id === data.channel_id}
+                            >
+                                <span className={c.art ?? 'a1'} style={{ width: 30, height: 30, borderRadius: 8, display: 'grid', placeItems: 'center', fontSize: 15, flex: '0 0 30px' }}>
+                                    {c.glyph}
+                                </span>
+                                <span style={{ fontSize: 12, fontWeight: 700 }}>{c.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                    {errors.channel_id && <div className="field__err">{errors.channel_id}</div>}
+                </div>
+
+                <div className="field">
+                    <label>দ্রুত সিলেক্ট</label>
+                    <div className="scroll-x">
+                        <div className="provs">
+                            {quickAmounts.map((a) => (
+                                <button key={a} type="button" className="prov" onClick={() => setData('amount', String(a))}>
+                                    {taka(a * 100)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <Field label={`পরিমাণ (সর্বনিম্ন ${taka(channel?.min_amount ?? 0)})`} error={errors.amount}>
+                    <input
+                        type="number" inputMode="numeric"
+                        placeholder={String((channel?.min_amount ?? 0) / 100)}
+                        value={data.amount} onChange={(e) => setData('amount', e.target.value)}
+                        disabled={processing}
+                    />
+                </Field>
+
+                <Field label="যে নাম্বার থেকে পাঠিয়েছেন (ঐচ্ছিক)" error={errors.sender_no}>
+                    <input type="tel" inputMode="numeric" placeholder="01XXXXXXXXX"
+                           value={data.sender_no} onChange={(e) => setData('sender_no', e.target.value.trim())}
+                           disabled={processing} />
+                </Field>
+
+                <Field label="ট্রানজেকশন আইডি (ঐচ্ছিক)" error={errors.txn_id}>
+                    <input type="text" placeholder="TXN123456"
+                           value={data.txn_id} onChange={(e) => setData('txn_id', e.target.value.trim())}
+                           disabled={processing} />
+                </Field>
+
+                <button type="submit" className="btn btn--gold btn--block" disabled={processing}>
+                    {processing ? 'অপেক্ষা করুন…' : `${t.deposit} করুন`}
+                </button>
+
+                <div className="note">
+                    ডিপোজিট লিমিট: {taka(channel?.min_amount ?? 0)} — {taka(channel?.max_amount ?? 0)}।
+                    রিকোয়েস্ট জমা দিলে অ্যাডমিন যাচাই করে ব্যালেন্সে যোগ করবেন।
+                </div>
+            </form>
+        </>
+    );
+}

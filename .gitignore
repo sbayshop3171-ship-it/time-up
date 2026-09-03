@@ -1,0 +1,22 @@
+node_modules
+.next
+out
+.vercel
+.DS_Store
+.env*
+!.env.example
+*.tsbuildinfo
+next-env.d.ts
+
+# Laravel
+laravel/vendor
+laravel/storage/*.key
+laravel/storage/framework/cache/*
+laravel/storage/framework/sessions/*
+laravel/storage/framework/testing/*
+laravel/storage/framework/views/*
+laravel/storage/logs/*
+laravel/bootstrap/cache/*
+laravel/public/build
+laravel/public/hot
+laravel/.phpunit.result.cache
