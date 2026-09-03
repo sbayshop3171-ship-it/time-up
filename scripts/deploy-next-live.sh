@@ -21,15 +21,20 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting deploy for $PM2_APP_NAME"
 
 cd "$REPO_DIR"
 
-if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+IS_GIT_WORK_TREE=0
+CURRENT_SHA="${DEPLOY_COMMIT:-}"
+TARGET_SHA="${DEPLOY_COMMIT:-}"
+
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  IS_GIT_WORK_TREE=1
+  CURRENT_SHA="$(git rev-parse HEAD)"
+elif [[ "$SKIP_FETCH" != "1" || -z "$TARGET_SHA" ]]; then
   echo "Repository is not initialized in $REPO_DIR"
   exit 1
 fi
 
-CURRENT_SHA="$(git rev-parse HEAD)"
-
 if [[ "$SKIP_FETCH" == "1" ]]; then
-  TARGET_SHA="$CURRENT_SHA"
+  TARGET_SHA="${TARGET_SHA:-$CURRENT_SHA}"
 else
   git fetch origin "$BRANCH"
   TARGET_SHA="$(git rev-parse "origin/$BRANCH")"
@@ -40,7 +45,7 @@ if [[ -f "$STATE_FILE" ]]; then
   LAST_DEPLOYED_SHA="$(tr -d '[:space:]' < "$STATE_FILE")"
 fi
 
-if [[ "$CURRENT_SHA" != "$TARGET_SHA" ]]; then
+if [[ "$IS_GIT_WORK_TREE" == "1" && "$CURRENT_SHA" != "$TARGET_SHA" ]]; then
   echo "Updating $CURRENT_SHA -> $TARGET_SHA"
   git reset --hard "$TARGET_SHA"
 elif [[ "$LAST_DEPLOYED_SHA" == "$TARGET_SHA" && -d "$REPO_DIR/.next" ]]; then

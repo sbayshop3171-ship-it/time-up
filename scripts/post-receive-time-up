@@ -5,12 +5,24 @@ set -euo pipefail
 export GIT_DIR="${GIT_DIR:-/var/www/tafsir/data/git/time-up.git}"
 export GIT_WORK_TREE="${GIT_WORK_TREE:-/var/www/tafsir/data/deployments/time-up-repo}"
 
+NEW_SHA=""
+while read -r _oldrev newrev refname; do
+  if [[ "$refname" == "refs/heads/main" ]]; then
+    NEW_SHA="$newrev"
+  fi
+done
+
+if [[ -z "$NEW_SHA" ]]; then
+  exit 0
+fi
+
 mkdir -p "$GIT_WORK_TREE"
-git checkout -f main
+git checkout -f "$NEW_SHA"
 
 cd "$GIT_WORK_TREE"
 
 SKIP_FETCH=1 \
+DEPLOY_COMMIT="$NEW_SHA" \
 PORT="${PORT:-3001}" \
 PM2_APP_NAME="${PM2_APP_NAME:-time-up}" \
 bash scripts/deploy-next-live.sh
