@@ -43,6 +43,17 @@ CRAZY_TIME_LAUNCH_URL=
 
 After that, every push to `main` can be deployed by Vercel automatically.
 
+VPS/FASTPANEL server deploy is also prepared for the `astbgs-live` SSH host:
+
+```bash
+scripts/setup-live-push.sh
+git push origin main
+```
+
+That push sends the same commit to GitHub and the server bare repo. The server
+hook checks out the code to `/var/www/tafsir/data/deployments/time-up-repo`,
+builds it and runs the Next.js app in PM2 as `time-up` on port `3001`.
+
 ## Layout
 
 ```

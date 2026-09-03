@@ -82,6 +82,45 @@ keeps `laravel/`, `legacy/`, `docs/` and `scripts/` out of the Vercel build.
 4. Keep production updates simple: edit locally, test with `npm run build`,
    commit, push to `main`, then Vercel deploys the new version.
 
+## VPS/FASTPANEL live workflow
+
+This repo includes the same push-to-server workflow used by the existing
+FASTPANEL account.
+
+Server defaults:
+
+```bash
+Bare repo: /var/www/tafsir/data/git/time-up.git
+Work tree: /var/www/tafsir/data/deployments/time-up-repo
+PM2 app:   time-up
+Port:      3001
+```
+
+One-time local setup:
+
+```bash
+scripts/setup-live-push.sh
+```
+
+Then future updates are:
+
+```bash
+npm run lint
+npm run build
+git add .
+git commit -m "Update site"
+git push origin main
+```
+
+The push goes to GitHub and the VPS. On the VPS, `scripts/deploy-next-live.sh`
+runs `npm ci`, `npm run build`, then starts or restarts the PM2 process.
+
+Keep `.env.local` on the VPS work tree, not in Git. At minimum set
+`CRAZY_TIME_LAUNCH_URL` there for the Crazy Time iframe launch.
+
+To put the PM2 app behind a domain, add a FASTPANEL/nginx reverse proxy from
+the desired domain to `http://127.0.0.1:3001`.
+
 ## What is NOT in this repo
 
 These are gitignored and have to be supplied separately by the owner:
